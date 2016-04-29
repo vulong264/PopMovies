@@ -1,5 +1,6 @@
 package com.vulong.android.popmovies;
 
+import android.graphics.Movie;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
@@ -12,6 +13,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.GridView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -23,13 +25,19 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Vector;
+import java.util.concurrent.ExecutionException;
 
 /**
  * A placeholder fragment containing a simple view.
  */
 public class MainActivityFragment extends Fragment {
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
-    private ArrayAdapter<String> dataAdapter;
+    private MoviePosterAdapter movieAdapter;
+    private ArrayList<MoviePoster> moviePosterList;
+
     public MainActivityFragment() {
     }
     @Override
@@ -60,15 +68,24 @@ public class MainActivityFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_main, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+        moviePosterList = new ArrayList<MoviePoster>();
+        movieAdapter = new MoviePosterAdapter(getActivity(), moviePosterList);
+
+        // Get a reference to the ListView, and attach this adapter to it.
+        GridView gridView = (GridView) rootView.findViewById(R.id.movie_poster_grid);
+        gridView.setAdapter(movieAdapter);
+
+        return rootView;
     }
 
-    private class FetchMovieTask extends AsyncTask<String, Void, String[]> {
+    private class FetchMovieTask extends AsyncTask<String, Void, Vector> {
 
         private final String LOG_TAG = FetchMovieTask.class.getSimpleName();
 
         @Override
-        protected String[] doInBackground(String... params) {
+        protected Vector doInBackground(String... params) {
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
             HttpURLConnection urlConnection = null;
@@ -145,46 +162,58 @@ public class MainActivityFragment extends Fragment {
         }
 
         @Override
-        protected void onPostExecute(String[] strings) {
-            super.onPostExecute(strings);
-//            dataAdapter.clear();
-//            for (String dayForcastStr : strings) {
-//                dataAdapter.add(dayForcastStr);
-//            }
+        protected void onPostExecute(Vector vtResult) {
+            try {
+                super.onPostExecute(vtResult);
+                movieAdapter.clear();
+//                moviePosterList = new MoviePoster[vtResult.size()];
+                for (int i = 0; i < vtResult.size(); i++) {
+                    Vector vtMovie = (Vector) vtResult.elementAt(i);
+                    String strId = vtMovie.elementAt(0).toString();
+                    String strTitle = vtMovie.elementAt(1).toString();
+                    String strPath = vtMovie.elementAt(2).toString();
+                    MoviePoster mv = new MoviePoster(strId,strTitle,strPath);
+                    movieAdapter.add(mv);
+//                    moviePosterList[i]=mv;
+                }
+
+            }
+            catch (Exception e)
+            {
+                Log.e(LOG_TAG, e.getMessage(),e);
+                e.printStackTrace();
+            }
         }
     }
     private void updateMovies() {
         FetchMovieTask fetchData = new FetchMovieTask();
         fetchData.execute();
     }
-    private String[] getMovieDataFromJson(String listMovieJsonStr)
+    private Vector getMovieDataFromJson(String listMovieJsonStr)
             throws JSONException {
-        // These are the names of the JSON objects that need to be extracted.
         final String OWM_RESULT = "results";
-        final String OWM_OVERVIEW = "overview";
-        final String OWM_IMAGE = "backdrop_path";
+        final String OWM_TITLE = "title";
+        final String OWM_IMAGE = "poster_path";
+        final String OWM_ID = "id";
 
         JSONObject listMovieJson = new JSONObject(listMovieJsonStr);
         JSONArray moviesArray = listMovieJson.getJSONArray(OWM_RESULT);
 
-        String[] resultStrs = new String[moviesArray.length()];
+        Vector vtResult = new Vector();
+
+//        String[] resultStrs = new String[moviesArray.length()];
         for (int i = 0; i < moviesArray.length(); i++) {
-            String strOverview;
-            String strImagePath;
-
-            // Get the JSON object representing the day
             JSONObject movieObject = moviesArray.getJSONObject(i);
-
-            // "temp" when working with temperature.  It confuses everybody.
-            strOverview = movieObject.getString(OWM_OVERVIEW);
-            strImagePath = movieObject.getString(OWM_IMAGE);
-            resultStrs[i] = strOverview + "|" + strImagePath;
+            Vector mvDetail = new Vector();
+            mvDetail.add(movieObject.getString(OWM_ID));
+            mvDetail.add(movieObject.getString(OWM_TITLE));
+            mvDetail.add(movieObject.getString(OWM_IMAGE));
+            vtResult.add(mvDetail);
         }
 
-        for (String s : resultStrs) {
-            Log.v(LOG_TAG, "Forecast entry: " + s);
-        }
-        return resultStrs;
-
+//        for (String s : resultStrs) {
+//            Log.v(LOG_TAG, "Forecast entry: " + s);
+//        }
+        return vtResult;
     }
 }
