@@ -1,5 +1,6 @@
 package com.vulong.android.popmovies;
 
+import android.content.Intent;
 import android.graphics.Movie;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -12,8 +13,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -74,34 +76,63 @@ public class MainActivityFragment extends Fragment {
         movieAdapter = new MoviePosterAdapter(getActivity(), moviePosterList);
 
         // Get a reference to the ListView, and attach this adapter to it.
-        GridView gridView = (GridView) rootView.findViewById(R.id.movie_poster_grid);
+        final GridView gridView = (GridView) rootView.findViewById(R.id.movie_poster_grid);
         gridView.setAdapter(movieAdapter);
+
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+//                MoviePoster mvPos = movieAdapter.getItem(i);
+//                CharSequence text = mvPos.movieTitle;
+//                Toast toast = Toast.makeText(gridView.getContext(), text, Toast.LENGTH_SHORT);
+//                toast.show();
+                try {
+                    Intent movieDetailIntent = new Intent(getActivity(), MovieDetailActivity.class);
+//                    MoviePoster selectedMovie = (MoviePoster)adapterView.getItemAtPosition(i);
+                    MoviePoster selectedMovie = movieAdapter.getItem(i);
+                    movieDetailIntent.putExtra("MovieID",selectedMovie.movieId);
+                    startActivity(movieDetailIntent);
+                }
+                catch (Exception ex)
+                {
+                    CharSequence errTxt = ex.getMessage();
+                    Toast toast = Toast.makeText(getContext(), errTxt, Toast.LENGTH_SHORT);
+                    toast.show();
+                    Log.e(LOG_TAG,ex.getMessage(),ex);
+                }
+            }
+        }
+        );
+
 
         return rootView;
     }
 
-    private class FetchMovieTask extends AsyncTask<String, Void, Vector> {
-
+    public class FetchMovieTask extends AsyncTask<String, Void, Vector> {
         private final String LOG_TAG = FetchMovieTask.class.getSimpleName();
-
         @Override
         protected Vector doInBackground(String... params) {
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
+
+            final String QUERY_POPULAR = "http://api.themoviedb.org/3/movie/popular?";
+            final String QUERY_TOPRATED = "http://api.themoviedb.org/3/movie/top_rated?";
+            final String APPID_PARAM = "api_key";
+            final String APPID_VALUE = "af7d6c47be759946143eb257a037ca1c";
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
-
             // Will contain the raw JSON response as a string.
             String forecastJsonStr = null;
             try {
-//                String strLoc = "";
-//                if (params[0] != null)
-//                    strLoc = params[0];
+                String strQueryCommand = QUERY_POPULAR;
+                String strQueryType = "";
+                if (params[0] != null)
+                    strQueryType = params[0];
+                if (!strQueryType.equals("POP"))
+                    strQueryCommand = QUERY_TOPRATED;
 
-                final String QUERY = "http://api.themoviedb.org/3/movie/popular?";
-                final String APPID_PARAM = "api_key";
-                final String APPID_VALUE = "af7d6c47be759946143eb257a037ca1c";
-                Uri builtUri = Uri.parse(QUERY).buildUpon()
+                Uri builtUri = Uri.parse(strQueryCommand).buildUpon()
                         .appendQueryParameter(APPID_PARAM, APPID_VALUE)
                         .build();
 
@@ -153,7 +184,8 @@ public class MainActivityFragment extends Fragment {
             }
 
             try {
-                return getMovieDataFromJson(forecastJsonStr);
+                    return getMovieDataFromJson(forecastJsonStr);
+
             } catch (JSONException e) {
                 Log.e(LOG_TAG, e.getMessage(), e);
                 e.printStackTrace();
@@ -185,9 +217,16 @@ public class MainActivityFragment extends Fragment {
             }
         }
     }
+    String strSort = "";
+    String POP = "POP";
+    String TOP = "TOP";
     private void updateMovies() {
         FetchMovieTask fetchData = new FetchMovieTask();
-        fetchData.execute();
+        if(!strSort.equals(POP))
+            strSort = POP;
+        else
+            strSort = TOP;
+        fetchData.execute(strSort);
     }
     private Vector getMovieDataFromJson(String listMovieJsonStr)
             throws JSONException {

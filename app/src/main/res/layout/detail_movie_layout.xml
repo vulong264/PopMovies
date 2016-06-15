@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+<FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/green"
+    android:id="@+id/titleframe"
+    >
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/detail_title_textview"
+        android:text="Title"
+        android:textSize="120px"
+        android:textColor="@color/white"
+        android:paddingLeft="20dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
+        />
+</FrameLayout>
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_below="@+id/titleframe"
+    android:layout_margin="@dimen/activity_horizontal_margin"
+    android:id="@+id/quickinfo">
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.5"
+        android:id="@+id/poster_frame"
+        >
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:id="@+id/poster_img_view"
+            />
+        </FrameLayout>
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.5"
+        android:orientation="vertical"
+        android:layout_toRightOf="@+id/poster_frame">
+        <TextView
+            android:text="YEAR"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/detail_release_date_txt"
+            />
+        <TextView
+            android:text="run time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/detail_runtime_txt"
+            />
+        <TextView
+            android:text="rating"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/detail_rating_txt"
+            />
+    </LinearLayout>
+</LinearLayout>
+<TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@id/quickinfo"
+    android:layout_margin="@dimen/fab_margin"
+    android:text="A very long description goes here and here and here and here and here"
+    android:id="@+id/detail_overview_txt"
+    />
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/detail_overview_txt"
+        android:id="@+id/trailer_listview">
+
+    </ListView>
+</RelativeLayout>
